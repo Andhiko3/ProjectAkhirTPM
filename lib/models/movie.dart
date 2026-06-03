@@ -1,5 +1,5 @@
 class Movie {
-  final String id;
+  final int id;
   final String title;
   final String poster;
   final double rating;
@@ -27,31 +27,40 @@ class Movie {
     required this.price, // Tambahkan properti price
   });
 
-  factory Movie.fromJson(Map<String, dynamic> json) {
-    return Movie(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      poster: json['imgUrl'] ?? '',
-      rating: (json['rating'] is String)
-          ? double.tryParse(json['rating'] ?? '0') ?? 0.0
-          : json['rating']?.toDouble() ?? 0.0,
-      genre: json['genre'] is List
-          ? List<String>.from(json['genre']) 
-          : [],  
-      duration: json['duration'] ?? '',
-      description: json['description'] ?? '',
-      director: json['director'] ?? '',
-      language: json['language'] ?? '',
-      releaseDate: json['release_date'] ?? '',
-      cast: json['cast'] is List
-          ? List<String>.from(json['cast'])  
-          : [],  
-      price: (json['price'] is String)
-          ? double.tryParse(json['price'] ?? '0') ?? 0.0
-          : json['price']?.toDouble() ?? 0.0, // Pastikan properti price diambil dari JSON
-    );
-  }
+ factory Movie.fromJson(Map<String, dynamic> json) {
+  print("JSON MOVIE:");
+  print(json);
 
+  return Movie(
+    id: int.tryParse(json['id'].toString()) ?? 0,
+
+    title: json['title']?.toString() ?? '',
+
+    poster: json['imgUrl']?.toString() ?? '',
+
+    rating: double.tryParse(json['rating'].toString()) ?? 0.0,
+
+    genre: json['genre'] is List
+        ? List<String>.from(json['genre'])
+        : [],
+
+    duration: json['duration']?.toString() ?? '',
+
+    description: json['description']?.toString() ?? '',
+
+    director: json['director']?.toString() ?? '',
+
+    language: json['language']?.toString() ?? '',
+
+    releaseDate: json['release_date']?.toString() ?? '',
+
+    cast: json['cast'] is List
+        ? List<String>.from(json['cast'])
+        : [],
+
+    price: double.tryParse(json['price'].toString()) ?? 0.0,
+  );
+}
 
   Map<String, dynamic> toJson() => {
     'id': id,

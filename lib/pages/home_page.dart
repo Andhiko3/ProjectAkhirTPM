@@ -6,6 +6,13 @@ import 'detail_page.dart';
 import 'favorite_page.dart';
 import '../services/user_service.dart';
 import 'profile_page.dart';
+import 'ai_chat_page.dart';
+import 'search_page.dart';
+import 'map_page.dart';
+import 'ticket_history_page.dart';
+import 'dart:async';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'admin_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,16 +26,102 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String? error;
 
+  String role = "user";
+
   String? selectedGenre;
   String? selectedYear;
   double? selectedRating;
 
   final List<String> genres = ['Action', 'Comedy', 'Drama', 'Horror'];
+  StreamSubscription? _accelerometerSubscription;
+
+  bool darkModeRecommendation = false;
+  DateTime? _lastShake;
+  DateTime? _lastSensorAction;
+  bool _sensorLock = false;
 
   @override
   void initState() {
     super.initState();
+
     loadMovies();
+    loadRole();
+    startShakeSensor();
+  }
+
+  Future<void> loadRole() async {
+    role = await UserService.getRole();
+
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _accelerometerSubscription?.cancel();
+    super.dispose();
+  }
+
+  void startShakeSensor() {
+    _accelerometerSubscription = accelerometerEvents.listen((event) {
+      double total = event.x.abs() + event.y.abs() + event.z.abs();
+
+      // SHAKE
+      if (total > 50) {
+        _lastShake = DateTime.now();
+        _lastSensorAction = DateTime.now();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "🎲 Random Movie Recommendation",
+            ),
+          ),
+        );
+
+        if (movies.isNotEmpty) {
+          movies.shuffle();
+          setState(() {});
+        }
+
+        return;
+      }
+
+      // Setelah shake, abaikan sensor miring 2 detik
+      if (_lastShake != null) {
+        final diff = DateTime.now().difference(_lastShake!);
+
+        if (diff.inSeconds < 3) {
+          return;
+        }
+      }
+
+      // MIRING KANAN
+      if (event.x < -12 && !_sensorLock) {
+        _sensorLock = true;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AiChatPage(),
+          ),
+        ).then((_) {
+          _sensorLock = false;
+        });
+      }
+
+      // MIRING KIRI
+      if (event.x > 12 && !_sensorLock) {
+        _sensorLock = true;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const FavoritePage(),
+          ),
+        ).then((_) {
+          _sensorLock = false;
+        });
+      }
+    });
   }
 
   Future<void> loadMovies() async {
@@ -68,7 +161,54 @@ class _HomePageState extends State<HomePage> {
         ),
         backgroundColor: Colors.blue.shade800, // Warna latar belakang AppBar
         actions: [
+          IconButton(
+            icon: const Icon(Icons.feedback),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const TicketHistoryPage(),
+                ),
+              );
+            },
+          ),
           // Tombol Favorit
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.map),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MapPage(),
+                  ),
+                );
+              },
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SearchPage(),
+                  ),
+                );
+              },
+            ),
+          ),
           Container(
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
@@ -95,14 +235,16 @@ class _HomePageState extends State<HomePage> {
             child: IconButton(
               icon: const Icon(Icons.person_rounded),
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Profile button clicked'),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ProfilePage(),
                   ),
                 );
               },
             ),
           ),
+
           // Tombol Logout
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -128,10 +270,10 @@ class _HomePageState extends State<HomePage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF1E3A8A), 
-              Color(0xFF3B82F6), 
-              Color(0xFF60A5FA), 
-              Color(0xFFDDD6FE), 
+              Color(0xFF1E3A8A),
+              Color(0xFF3B82F6),
+              Color(0xFF60A5FA),
+              Color(0xFFDDD6FE),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -188,7 +330,8 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(12),
@@ -202,7 +345,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                     value: selectedGenre,
                     isExpanded: true,
-                    icon: Icon(Icons.keyboard_arrow_down, color: Colors.blue.shade600),
+                    icon: Icon(Icons.keyboard_arrow_down,
+                        color: Colors.blue.shade600),
                     dropdownColor: Colors.white,
                     items: [
                       DropdownMenuItem<String>(
@@ -234,9 +378,31 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        
         Expanded(
-          child: _buildContent(),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.smart_toy),
+                  label: const Text("AI Recommendation"),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AiChatPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: _buildContent(),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -375,7 +541,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.only(bottom: 16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.7,
+          childAspectRatio: 0.55,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),

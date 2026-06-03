@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/movie.dart';
+import '../services/favorite_service.dart';
 
 class MovieCard extends StatelessWidget {
   final Movie movie;
@@ -13,6 +14,10 @@ class MovieCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
+    print("CARD MOVIE = ${movie.title}");
+    print("POSTER = ${movie.poster}");
+    
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.95),

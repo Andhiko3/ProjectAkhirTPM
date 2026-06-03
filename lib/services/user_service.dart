@@ -1,41 +1,165 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user_profile.dart';
 
 class UserService {
-  static const String _usersKey = 'users';
-  static const String _loggedInKey = 'logged_in_user';
 
-  static Future<dynamic> register(String username, String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    final users = prefs.getStringList(_usersKey) ?? [];
-    if (users.any((u) => u.split(':')[0] == username)) {
-      return 'Username already exists';
-    }
-    users.add('$username:$password');
-    await prefs.setStringList(_usersKey, users);
-    return true;
-  }
+static Future<void> saveUser(
+  String username,
+  String email,
+  String role,
+) async {
 
-  static Future<dynamic> login(String username, String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    final users = prefs.getStringList(_usersKey) ?? [];
-    final found = users.any((u) {
-      final parts = u.split(':');
-      return parts[0] == username && parts[1] == password;
-    });
-    if (found) {
-      await prefs.setString(_loggedInKey, username);
-      return true;
-    }
-    return 'Invalid username or password';
-  }
+  final prefs =
+      await SharedPreferences.getInstance();
+      
 
-  static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_loggedInKey);
-  }
+  await prefs.setString(
+    'username',
+    username,
+  );
 
-  static Future<String?> getLoggedInUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_loggedInKey);
-  }
+  await prefs.setString(
+    'email',
+    email,
+  );
+
+  await prefs.setString(
+    'role',
+    role,
+  );
+}
+static Future<String?> getUsername() async {
+
+
+final prefs =
+    await SharedPreferences.getInstance();
+
+return prefs.getString(
+  'username',
+);
+
+}
+
+static Future<String?> getEmail() async {
+
+
+final prefs =
+    await SharedPreferences.getInstance();
+
+return prefs.getString(
+  'email',
+);
+
+
+}
+
+static Future<String> getRole() async {
+
+
+final prefs =
+    await SharedPreferences.getInstance();
+
+return prefs.getString(
+      'role',
+    ) ??
+    'user';
+
+
+}
+
+static Future<String?> getLoggedInUser() async {
+
+final prefs =
+    await SharedPreferences.getInstance();
+
+return prefs.getString(
+  'username',
+);
+
+
+}
+
+static Future<void> updateProfile({
+required String username,
+required String email,
+}) async {
+
+
+final prefs =
+    await SharedPreferences.getInstance();
+
+await prefs.setString(
+  'username',
+  username,
+);
+
+await prefs.setString(
+  'email',
+  email,
+);
+
+
+}
+
+static Future<void> saveProfile(
+UserProfile profile) async {
+
+
+final prefs =
+    await SharedPreferences.getInstance();
+
+await prefs.setString(
+  "username",
+  profile.username,
+);
+
+await prefs.setString(
+  "email",
+  profile.email,
+);
+
+await prefs.setString(
+  "phone",
+  profile.phone,
+);
+
+await prefs.setString(
+  "address",
+  profile.address,
+);
+
+
+}
+
+static Future<UserProfile?> getProfile() async {
+
+
+final prefs =
+    await SharedPreferences.getInstance();
+
+return UserProfile(
+  username:
+      prefs.getString(
+            "username",
+          ) ??
+          "",
+  email:
+      prefs.getString(
+            "email",
+          ) ??
+          "",
+  phone:
+      prefs.getString(
+            "phone",
+          ) ??
+          "",
+  address:
+      prefs.getString(
+            "address",
+          ) ??
+          "",
+);
+
+
+}
 }

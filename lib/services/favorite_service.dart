@@ -8,7 +8,9 @@ class FavoriteService {
 
   static Future<String> _getUserKey() async {
     final user = await UserService.getLoggedInUser();
-    return user != null ? 'favorite_movies_$user' : _favoritesKey;
+    return user != null ? 
+    'favorite_movies_$user'
+     : _favoritesKey;
   }
 
   static Future<List<Movie>> getFavorites() async {
@@ -44,7 +46,7 @@ class FavoriteService {
     }
   }
 
-  static Future<void> removeFromFavorites(String movieId) async {
+  static Future<void> removeFromFavorites(int movieId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final key = await _getUserKey();
@@ -59,7 +61,7 @@ class FavoriteService {
     }
   }
 
-  static Future<bool> isFavorite(String movieId) async {
+  static Future<bool> isFavorite(int movieId) async {
     try {
       final favorites = await getFavorites();
       return favorites.any((movie) => movie.id == movieId);

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "responsi" "\0"
+            VALUE "FileDescription", "TiketBioskop" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "responsi" "\0"
+            VALUE "InternalName", "TiketBioskop" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "responsi.exe" "\0"
-            VALUE "ProductName", "responsi" "\0"
+            VALUE "OriginalFilename", "TiketBioskop.exe" "\0"
+            VALUE "ProductName", "TiketBioskop" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

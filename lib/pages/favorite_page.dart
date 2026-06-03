@@ -14,6 +14,15 @@ class FavoritePage extends StatefulWidget {
 class _FavoritePageState extends State<FavoritePage> {
   List<Movie> favoriteMovies = [];
   bool isLoading = true;
+  Future<void> clearAllFavorites() async {
+    for (final movie in favoriteMovies) {
+      await FavoriteService.removeFromFavorites(
+        movie.id,
+      );
+    }
+
+    loadFavorites();
+  }
 
   @override
   void initState() {
@@ -58,7 +67,7 @@ class _FavoritePageState extends State<FavoritePage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                Icons.favorite_rounded, 
+                Icons.favorite_rounded,
                 color: Colors.white,
                 size: 24,
               ),
@@ -94,10 +103,10 @@ class _FavoritePageState extends State<FavoritePage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF1E3A8A), 
-              Color(0xFF3B82F6), 
-              Color(0xFF60A5FA), 
-              Color(0xFFDDD6FE), 
+              Color(0xFF1E3A8A),
+              Color(0xFF3B82F6),
+              Color(0xFF60A5FA),
+              Color(0xFFDDD6FE),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -199,7 +208,8 @@ class _FavoritePageState extends State<FavoritePage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade600,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -215,7 +225,6 @@ class _FavoritePageState extends State<FavoritePage> {
 
     return Column(
       children: [
-        
         Container(
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(20),
@@ -265,13 +274,60 @@ class _FavoritePageState extends State<FavoritePage> {
                         color: Colors.blue.shade600,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Swipe card to remove',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ],
                 ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_sweep,
+                  color: Colors.red,
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) {
+                      return AlertDialog(
+                        title: const Text(
+                          "Clear Favorites",
+                        ),
+                        content: const Text(
+                          "Delete all favorite movies?",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              "Cancel",
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await clearAllFavorites();
+                            },
+                            child: const Text(
+                              "Delete",
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
               ),
             ],
           ),
         ),
-        
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -279,24 +335,63 @@ class _FavoritePageState extends State<FavoritePage> {
               padding: const EdgeInsets.only(bottom: 16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.7,
+                childAspectRatio: 0.55,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
               itemCount: favoriteMovies.length,
               itemBuilder: (context, index) {
                 final movie = favoriteMovies[index];
-                return MovieCard(
-                  movie: movie,
-                  onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailPage(movieId: movie.id),
+
+                return Dismissible(
+                  key: Key(movie.id.toString()),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                  onDismissed: (_) async {
+                    await FavoriteService.removeFromFavorites(
+                      movie.id,
+                    );
+
+                    loadFavorites();
+
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.red,
+                        content: Text(
+                          '${movie.title} removed from favorites',
+                        ),
                       ),
                     );
-                    loadFavorites();
                   },
+                  child: MovieCard(
+                    movie: movie,
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetailPage(
+                            movieId: movie.id,
+                          ),
+                        ),
+                      );
+
+                      loadFavorites();
+                    },
+                  ),
                 );
               },
             ),

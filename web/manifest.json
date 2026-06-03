@@ -1,6 +1,6 @@
 {
-    "name": "responsi",
-    "short_name": "responsi",
+    "name": "TiketBioskop",
+    "short_name": "TiketBioskop",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

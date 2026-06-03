@@ -3,11 +3,20 @@ import 'package:intl/intl.dart';
 import '../models/movie.dart';
 import '../services/api_service.dart';
 import '../services/favorite_service.dart';
+import '../services/ticket_history_service.dart';
+import 'history_page.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../services/sentiment_service.dart';
+import '../models/feedback_model.dart';
+import '../services/feedback_service.dart';
 
 class DetailPage extends StatefulWidget {
-  final String movieId;
+  final int movieId;
 
-  const DetailPage({super.key, required this.movieId});
+  const DetailPage({
+    super.key,
+    required this.movieId,
+  });
 
   @override
   State<DetailPage> createState() => _DetailPageState();
@@ -26,6 +35,9 @@ class _DetailPageState extends State<DetailPage> {
   bool isTicketPurchased = false;
   List<String> selectedSeats = [];
   String ticketCode = '';
+  double ticketPrice = 50000;
+
+  double get totalPrice => selectedSeats.length * ticketPrice;
 
   final List<String> showTimes = [
     '10:00 AM',
@@ -51,6 +63,9 @@ class _DetailPageState extends State<DetailPage> {
   // Properti untuk kesan dan pesan
   String userFeedback = ''; // Menyimpan kesan dan pesan pengguna
 
+  String sentimentResult = '';
+  String sentimentScore = '';
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +81,7 @@ class _DetailPageState extends State<DetailPage> {
       });
 
       final movieDetail = await ApiService.getMovieById(widget.movieId);
+      print(movieDetail.price);
       setState(() {
         movie = movieDetail;
         isLoading = false;
@@ -208,11 +224,14 @@ class _DetailPageState extends State<DetailPage> {
             ),
             child: IconButton(
               icon: Icon(
-                isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
                 color: isFavorite ? Colors.red.shade400 : Colors.white,
               ),
               onPressed: movie != null ? _toggleFavorite : null,
-              tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+              tooltip:
+                  isFavorite ? 'Remove from favorites' : 'Add to favorites',
             ),
           ),
         ],
@@ -233,10 +252,10 @@ class _DetailPageState extends State<DetailPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF1E3A8A), 
-              Color(0xFF3B82F6), 
-              Color(0xFF60A5FA), 
-              Color(0xFFDDD6FE), 
+              Color(0xFF1E3A8A),
+              Color(0xFF3B82F6),
+              Color(0xFF60A5FA),
+              Color(0xFFDDD6FE),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -417,7 +436,8 @@ class _DetailPageState extends State<DetailPage> {
                           top: 12,
                           right: 12,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: Colors.amber.shade600,
                               borderRadius: BorderRadius.circular(16),
@@ -432,7 +452,8 @@ class _DetailPageState extends State<DetailPage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.star, color: Colors.white, size: 16),
+                                const Icon(Icons.star,
+                                    color: Colors.white, size: 16),
                                 const SizedBox(width: 4),
                                 Text(
                                   movie!.rating.toStringAsFixed(1),
@@ -449,7 +470,6 @@ class _DetailPageState extends State<DetailPage> {
                       ],
                     ),
                   ),
-                
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                   child: Column(
@@ -464,31 +484,32 @@ class _DetailPageState extends State<DetailPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
                       if (movie!.genre.isNotEmpty)
                         Wrap(
                           spacing: 8,
                           runSpacing: 4,
-                          children: movie!.genre.map((g) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade100,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.blue.shade300),
-                            ),
-                            child: Text(
-                              g,
-                              style: TextStyle(
-                                color: Colors.blue.shade700,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          )).toList(),
+                          children: movie!.genre
+                              .map((g) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade100,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                          color: Colors.blue.shade300),
+                                    ),
+                                    child: Text(
+                                      g,
+                                      style: TextStyle(
+                                        color: Colors.blue.shade700,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
                         ),
-                      
                       const SizedBox(height: 16),
-                      
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -498,13 +519,17 @@ class _DetailPageState extends State<DetailPage> {
                         ),
                         child: Column(
                           children: [
-                            _buildInfoRow(Icons.schedule, 'Duration', movie!.duration),
+                            _buildInfoRow(
+                                Icons.schedule, 'Duration', movie!.duration),
                             const SizedBox(height: 8),
-                            _buildInfoRow(Icons.calendar_today, 'Release Date', movie!.releaseDate),
+                            _buildInfoRow(Icons.calendar_today, 'Release Date',
+                                movie!.releaseDate),
                             const SizedBox(height: 8),
-                            _buildInfoRow(Icons.person, 'Director', movie!.director),
+                            _buildInfoRow(
+                                Icons.person, 'Director', movie!.director),
                             const SizedBox(height: 8),
-                            _buildInfoRow(Icons.language_outlined, 'Language', movie!.language),
+                            _buildInfoRow(Icons.language_outlined, 'Language',
+                                movie!.language),
                           ],
                         ),
                       ),
@@ -514,9 +539,7 @@ class _DetailPageState extends State<DetailPage> {
               ],
             ),
           ),
-          
           const SizedBox(height: 20),
-          
           if (movie!.cast.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.all(20),
@@ -546,29 +569,31 @@ class _DetailPageState extends State<DetailPage> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
-                    children: movie!.cast.map((c) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.shade300),
-                      ),
-                      child: Text(
-                        c,
-                        style: TextStyle(
-                          color: Colors.blue.shade700,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    )).toList(),
+                    children: movie!.cast
+                        .map((c) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade100,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.blue.shade300),
+                              ),
+                              child: Text(
+                                c,
+                                style: TextStyle(
+                                  color: Colors.blue.shade700,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ))
+                        .toList(),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
           ],
-          
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -606,9 +631,7 @@ class _DetailPageState extends State<DetailPage> {
               ],
             ),
           ),
-          
           const SizedBox(height: 20),
-
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -697,7 +720,9 @@ class _DetailPageState extends State<DetailPage> {
                             seat['isSelected'] = !seat['isSelected'];
                             isSeatSelected = seats.any((s) => s['isSelected']);
                           });
-                          _showOverlayNotification('Seat ${seat['id']} selected successfully!', Colors.blue);
+                          _showOverlayNotification(
+                              'Seat ${seat['id']} selected successfully!',
+                              Colors.blue);
                         }
                       },
                       child: Container(
@@ -788,21 +813,46 @@ class _DetailPageState extends State<DetailPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                Text(
+                  "Total Harga : Rp ${totalPrice.toStringAsFixed(0)}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
                 ElevatedButton(
                   onPressed: isSeatSelected && selectedShowTime != null
-                      ? () {
+                      ? () async {
                           setState(() {
                             isTicketPurchased = true;
                             selectedSeats = seats
                                 .where((seat) => seat['isSelected'] == true)
                                 .map((seat) => seat['id'] as String)
                                 .toList();
-                            ticketCode = 'MOVIE-${DateTime.now().millisecondsSinceEpoch}';
+
+                            ticketCode =
+                                'MOVIE-${DateTime.now().millisecondsSinceEpoch}';
+                          });
+                          for (var seat in seats) {
+                            if (seat['isSelected']) {
+                              seat['isAvailable'] = false;
+                              seat['isSelected'] = false;
+                            }
+                          }
+                          await TicketHistoryService.saveTicket({
+                            "movie": movie!.title,
+                            "seat": selectedSeats.join(","),
+                            "time": selectedShowTime,
+                            "code": ticketCode,
+                            "totalPrice": totalPrice,
+                            "purchaseDate": DateTime.now().toString(),
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                               content: Text(
-                                  'Selected Show Time: ${_convertTimeZone(currentTime, selectedTimeZone)}'),
+                                "Ticket saved to history",
+                              ),
                             ),
                           );
                         }
@@ -839,6 +889,13 @@ class _DetailPageState extends State<DetailPage> {
                     style: TextStyle(
                       color: Colors.blue.shade700,
                       fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    'Total Price: Rp ${totalPrice.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -979,16 +1036,84 @@ class _DetailPageState extends State<DetailPage> {
                   },
                 ),
                 const SizedBox(height: 16),
+                Text(
+                  "Total Harga : Rp ${totalPrice.toStringAsFixed(0)}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final result = SentimentService.analyze(userFeedback);
+
+                    setState(() {
+                      sentimentResult = result["sentiment"];
+                      sentimentScore = result["confidence"];
+                    });
+
+                    await FeedbackService.addFeedback(
+                      FeedbackModel(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        movieTitle: movie!.title,
+                        feedback: userFeedback,
+                        sentiment: result["sentiment"],
+                        date: DateTime.now().toString(),
+                      ),
+                    );
+
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Feedback saved: $userFeedback'),
+                      const SnackBar(
+                        content: Text(
+                          "Feedback saved successfully",
+                        ),
                       ),
                     );
                   },
-                  child: const Text('Submit Feedback'),
+                  child: const Text(
+                    'Analyze Feedback',
+                  ),
                 ),
+                if (sentimentResult.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.blue.shade200,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "AI Sentiment Analysis",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Sentiment: $sentimentResult",
+                          style: const TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          "Confidence: $sentimentScore%",
+                          style: const TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

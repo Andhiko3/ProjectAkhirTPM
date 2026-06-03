@@ -3,8 +3,13 @@ import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'services/user_service.dart';
 import '../pages/home_page.dart';
+import 'services/notification_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await NotificationService.init();
+
   runApp(const MyApp());
 }
 
@@ -32,14 +37,20 @@ class MyApp extends StatelessWidget {
           );
         }
         return MaterialApp(
-          title: 'Movie App',
           theme: ThemeData(
-            primarySwatch: Colors.deepPurple,
+            primarySwatch: Colors.blue,
+            scaffoldBackgroundColor: Colors.white,
             useMaterial3: true,
             appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: Color(0xFF1E3A8A),
               foregroundColor: Colors.white,
               elevation: 0,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+              ),
             ),
           ),
           home: snapshot.data,
